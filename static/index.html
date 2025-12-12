@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MLOps Hub – Uber Fare Intelligence</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0a0e27;
+      color: #e8edf5;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+    
+    body::before {
+      content: "";
+      position: fixed;
+      top: -50%;
+      right: -20%;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
+      animation: pulse 8s ease-in-out infinite;
+      pointer-events: none;
+    }
+    
+    body::after {
+      content: "";
+      position: fixed;
+      bottom: -30%;
+      left: -20%;
+      width: 80%;
+      height: 80%;
+      background: radial-gradient(circle, rgba(34, 211, 238, 0.12) 0%, transparent 70%);
+      animation: pulse 10s ease-in-out infinite reverse;
+      pointer-events: none;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 0.5; transform: scale(1); }
+      50% { opacity: 0.8; transform: scale(1.1); }
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      position: relative;
+      z-index: 1;
+    }
+    
+    header {
+      text-align: center;
+      margin-bottom: 60px;
+      padding-top: 20px;
+    }
+    
+    .logo-cluster {
+      display: inline-flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(34, 211, 238, 0.1));
+      padding: 12px 28px;
+      border-radius: 100px;
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      backdrop-filter: blur(20px);
+    }
+    
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #8b5cf6, #22d3ee);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: 900;
+      color: #0a0e27;
+      box-shadow: 0 8px 32px rgba(139, 92, 246, 0.4);
+      animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+    }
+    
+    .logo-text h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #8b5cf6, #22d3ee, #10b981);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -1px;
+      margin-bottom: 8px;
+    }
+    
+    .subtitle {
+      font-size: 1.1rem;
+      color: #94a3b8;
+      font-weight: 400;
+    }
+    
+    .meta-info {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin-top: 24px;
+      flex-wrap: wrap;
+    }
+    
+    .meta-item {
+      background: rgba(15, 23, 42, 0.6);
+      padding: 8px 20px;
+      border-radius: 20px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      font-size: 0.9rem;
+      backdrop-filter: blur(10px);
+    }
+    
+    .meta-item span {
+      color: #64748b;
+      margin-right: 8px;
+    }
+    
+    .meta-item strong {
+      color: #22d3ee;
+      font-weight: 600;
+    }
+    
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      margin-top: 40px;
+    }
+    
+    .card {
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.6));
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      border-radius: 24px;
+      padding: 32px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(20px);
+    }
+    
+    .card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #8b5cf6, #22d3ee);
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+    
+    .card:hover {
+      transform: translateY(-8px);
+      border-color: rgba(139, 92, 246, 0.6);
+      box-shadow: 0 20px 60px rgba(139, 92, 246, 0.3);
+    }
+    
+    .card:hover::before {
+      opacity: 1;
+    }
+    
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    
+    .card-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(34, 211, 238, 0.2));
+      border: 1px solid rgba(139, 92, 246, 0.4);
+    }
+    
+    .card.predict .card-icon {
+      background: linear-gradient(135deg, rgba(34, 211, 238, 0.2), rgba(16, 185, 129, 0.2));
+      border-color: rgba(34, 211, 238, 0.4);
+    }
+    
+    .card.retrain .card-icon {
+      background: linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(251, 191, 36, 0.2));
+      border-color: rgba(249, 115, 22, 0.4);
+    }
+    
+    .card-title h3 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #e8edf5;
+      margin-bottom: 4px;
+    }
+    
+    .card-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #64748b;
+      font-weight: 600;
+    }
+    
+    .card-description {
+      color: #94a3b8;
+      line-height: 1.6;
+      margin-bottom: 20px;
+      font-size: 0.95rem;
+    }
+    
+    .tech-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    
+    .tech-tag {
+      background: rgba(139, 92, 246, 0.15);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      color: #c4b5fd;
+      font-weight: 500;
+    }
+    
+    .card.predict .tech-tag {
+      background: rgba(34, 211, 238, 0.15);
+      border-color: rgba(34, 211, 238, 0.3);
+      color: #67e8f9;
+    }
+    
+    .card.retrain .tech-tag {
+      background: rgba(249, 115, 22, 0.15);
+      border-color: rgba(249, 115, 22, 0.3);
+      color: #fdba74;
+    }
+    
+    .card-button {
+      width: 100%;
+      padding: 14px 24px;
+      border: none;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .card-button::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+    
+    .card-button:hover::before {
+      width: 300px;
+      height: 300px;
+    }
+    
+    .card-button span {
+      position: relative;
+      z-index: 1;
+    }
+    
+    .card.predict .card-button {
+      background: linear-gradient(135deg, #22d3ee, #10b981);
+      color: #0a0e27;
+    }
+    
+    .card.retrain .card-button {
+      background: linear-gradient(135deg, #f97316, #fbbf24);
+      color: #0a0e27;
+    }
+    
+    .card.coming .card-button {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: #fff;
+    }
+    
+    .card-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(139, 92, 246, 0.4);
+    }
+    
+    footer {
+      margin-top: 80px;
+      padding: 30px;
+      border-top: 1px solid rgba(148, 163, 184, 0.2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    
+    .footer-note {
+      color: #64748b;
+      font-size: 0.9rem;
+      max-width: 500px;
+    }
+    
+    .footer-api {
+      text-align: right;
+      font-size: 0.85rem;
+      color: #94a3b8;
+    }
+    
+    .footer-api code {
+      background: rgba(139, 92, 246, 0.2);
+      padding: 4px 10px;
+      border-radius: 6px;
+      color: #c4b5fd;
+      font-family: 'Courier New', monospace;
+    }
+    
+    @media (max-width: 768px) {
+      .logo-text h1 {
+        font-size: 1.8rem;
+      }
+      
+      .cards-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      footer {
+        flex-direction: column;
+        text-align: center;
+      }
+      
+      .footer-api {
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo-cluster">
+        <div class="logo-icon">U</div>
+        <div class="logo-text">
+          <h1>MLOps Intelligence Hub</h1>
+        </div>
+      </div>
+      <p class="subtitle">Real-time prediction, adaptive retraining & seamless deployment</p>
+      
+      <div class="meta-info">
+        <div class="meta-item">
+          <span>👨‍💻</span><strong>Yassine Maazaoui</strong>
+        </div>
+        <div class="meta-item">
+          <span>🚕</span><strong>Uber Fare Prediction</strong>
+        </div>
+        <div class="meta-item">
+          <span>🤖</span><strong>CatBoost Model</strong>
+        </div>
+        <div class="meta-item">
+          <span>🎯</span><strong>72.6% Accuracy</strong>
+        </div>
+      </div>
+    </header>
+
+    <div class="cards-grid">
+      <div class="card predict">
+        <div class="card-header">
+          <div class="card-icon">🎯</div>
+          <div class="card-title">
+            <p class="card-label">Inference Engine</p>
+            <h3>Fare Predictor</h3>
+          </div>
+        </div>
+        <p class="card-description">
+          Interactive map-based interface to estimate ride costs. Select pickup and dropoff locations, configure trip parameters, and receive instant fare predictions powered by your trained CatBoost model (72.6% accuracy).
+        </p>
+        <div class="tech-tags">
+          <span class="tech-tag">CatBoost</span>
+          <span class="tech-tag">Leaflet Maps</span>
+          <span class="tech-tag">Real-time</span>
+        </div>
+        <button class="card-button" onclick="window.location.href='/predict-page'">
+          <span>Launch Predictor →</span>
+        </button>
+      </div>
+
+      <div class="card retrain">
+        <div class="card-header">
+          <div class="card-icon">⚙️</div>
+          <div class="card-title">
+            <p class="card-label">Training Console</p>
+            <h3>Model Optimizer</h3>
+          </div>
+        </div>
+        <p class="card-description">
+          Fine-tune your models with precision. Adjust hyperparameters, compare 9 different algorithms, and optimize performance with live RMSE and R² metrics feedback. Switch between CatBoost, XGBoost, LightGBM, and more.
+        </p>
+        <div class="tech-tags">
+          <span class="tech-tag">9 Models</span>
+          <span class="tech-tag">Metrics</span>
+          <span class="tech-tag">MLOps</span>
+        </div>
+        <button class="card-button" onclick="window.location.href='/retrain-page'">
+	  <span>Open Console →</span>
+	</button>
+
+      </div>
+
+      <div class="card coming">
+        <div class="card-header">
+          <div class="card-icon">📊</div>
+          <div class="card-title">
+            <p class="card-label">Coming Soon</p>
+            <h3>Analytics Suite</h3>
+          </div>
+        </div>
+        <p class="card-description">
+          Advanced monitoring dashboards, model performance tracking, feature importance analysis, and prediction history visualization. Build your next-generation observability layer here.
+        </p>
+        <div class="tech-tags">
+          <span class="tech-tag">Dashboards</span>
+          <span class="tech-tag">Monitoring</span>
+          <span class="tech-tag">Insights</span>
+        </div>
+        <button class="card-button" onclick="alert('🚀 Coming soon! This space is ready for your next innovation.')">
+          <span>Explore Roadmap →</span>
+        </button>
+      </div>
+    </div>
+
+    <footer>
+      <div class="footer-note">
+        💡 <strong>Pro tip:</strong> Bookmark this hub as your project command center. All interfaces are designed to work seamlessly together.
+      </div>
+      <div class="footer-api">
+        <div>Backend: <code>http://127.0.0.1:8000</code></div>
+        <div>API Docs: <code>/docs</code></div>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

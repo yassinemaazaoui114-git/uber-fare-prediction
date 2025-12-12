@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fare Predictor – Uber ML Intelligence</title>
+  
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0a0e27;
+      color: #e8edf5;
+      height: 100vh;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    body::before {
+      content: "";
+      position: fixed;
+      top: -30%;
+      right: -10%;
+      width: 60%;
+      height: 60%;
+      background: radial-gradient(circle, rgba(34, 211, 238, 0.15) 0%, transparent 70%);
+      animation: pulse 8s ease-in-out infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.1); }
+    }
+    
+    .main-container {
+      height: 100vh;
+      display: flex;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .left-panel {
+      width: 480px;
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.85));
+      border-right: 1px solid rgba(34, 211, 238, 0.3);
+      backdrop-filter: blur(40px);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+    
+    .panel-header {
+      padding: 32px 32px 24px;
+      border-bottom: 1px solid rgba(71, 85, 105, 0.3);
+    }
+    
+    .title-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      gap: 12px;
+    }
+    
+    .title-section h1 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #22d3ee, #10b981);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.5px;
+    }
+    
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #6ee7b7;
+      white-space: nowrap;
+    }
+    
+    .status-indicator {
+      width: 6px;
+      height: 6px;
+      background: #10b981;
+      border-radius: 50%;
+      animation: blink 2s ease-in-out infinite;
+    }
+    
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    
+    .subtitle {
+      color: #94a3b8;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+    
+    .panel-content {
+      padding: 24px 32px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .form-section {
+      flex: 1;
+    }
+    
+    .input-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #cbd5e1;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    label .icon {
+      font-size: 1rem;
+    }
+    
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(71, 85, 105, 0.5);
+      background: rgba(15, 23, 42, 0.8);
+      color: #e8edf5;
+      font-size: 0.95rem;
+      transition: all 0.3s;
+      font-family: inherit;
+    }
+    
+    input:focus {
+      outline: none;
+      border-color: #22d3ee;
+      background: rgba(15, 23, 42, 1);
+      box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.15);
+    }
+    
+    .helper-text {
+      font-size: 0.75rem;
+      color: #64748b;
+      margin-top: 4px;
+    }
+    
+    .map-instructions {
+      background: rgba(34, 211, 238, 0.1);
+      border: 1px solid rgba(34, 211, 238, 0.3);
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      color: #67e8f9;
+      line-height: 1.4;
+      margin-bottom: 20px;
+    }
+    
+    .map-instructions strong {
+      color: #22d3ee;
+    }
+    
+    .result-panel {
+      padding: 20px;
+      border-radius: 12px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(71, 85, 105, 0.4);
+      min-height: 120px;
+      transition: all 0.3s;
+      margin-bottom: 20px;
+    }
+    
+    .result-panel.pending {
+      color: #94a3b8;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    
+    .result-panel.success {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(34, 211, 238, 0.15));
+      border-color: rgba(16, 185, 129, 0.5);
+    }
+    
+    .result-panel.success .fare-amount {
+      font-size: 2.8rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, #22d3ee, #10b981);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 4px;
+      text-align: center;
+      display: block;
+    }
+    
+    .result-panel.success .fare-label {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      text-align: center;
+      display: block;
+      margin-bottom: 16px;
+    }
+    
+    .result-details {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    
+    .detail-item {
+      background: rgba(15, 23, 42, 0.5);
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(71, 85, 105, 0.3);
+    }
+    
+    .detail-label {
+      font-size: 0.7rem;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    
+    .detail-value {
+      font-size: 0.9rem;
+      color: #22d3ee;
+      font-weight: 600;
+    }
+    
+    .result-panel.error {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    
+    .actions {
+      display: flex;
+      gap: 10px;
+    }
+    
+    button {
+      flex: 1;
+      padding: 14px 20px;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #22d3ee, #10b981);
+      color: #0a0e27;
+      box-shadow: 0 4px 20px rgba(34, 211, 238, 0.3);
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(34, 211, 238, 0.5);
+    }
+    
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .btn-secondary {
+      background: rgba(71, 85, 105, 0.3);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      color: #cbd5e1;
+    }
+    
+    .btn-secondary:hover {
+      background: rgba(71, 85, 105, 0.5);
+      border-color: #94a3b8;
+    }
+    
+    .map-container {
+      flex: 1;
+      position: relative;
+      background: rgba(15, 23, 42, 0.4);
+    }
+    
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+    
+    .map-overlay {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(34, 211, 238, 0.3);
+      border-radius: 12px;
+      padding: 12px 16px;
+      backdrop-filter: blur(20px);
+      z-index: 1000;
+      max-width: 320px;
+    }
+    
+    .map-overlay-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #22d3ee;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    
+    .map-overlay-text {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      line-height: 1.4;
+    }
+    
+    .coordinates-display {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(34, 211, 238, 0.3);
+      border-radius: 12px;
+      padding: 12px 16px;
+      backdrop-filter: blur(20px);
+      z-index: 1000;
+      font-size: 0.75rem;
+      color: #94a3b8;
+      display: none;
+    }
+    
+    .coordinates-display.active {
+      display: block;
+    }
+    
+    .coord-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 4px;
+    }
+    
+    .coord-item:last-child {
+      margin-bottom: 0;
+    }
+    
+    .coord-label {
+      color: #64748b;
+    }
+    
+    .coord-value {
+      color: #22d3ee;
+      font-weight: 600;
+    }
+    
+    @media (max-width: 1200px) {
+      .main-container {
+        flex-direction: column;
+      }
+      
+      .left-panel {
+        width: 100%;
+        height: auto;
+        max-height: 50vh;
+        border-right: none;
+        border-bottom: 1px solid rgba(34, 211, 238, 0.3);
+      }
+      
+      .map-container {
+        height: 50vh;
+      }
+    }
+    
+    @media (max-width: 640px) {
+      .panel-header {
+        padding: 20px;
+      }
+      
+      .panel-content {
+        padding: 20px;
+      }
+      
+      .title-section h1 {
+        font-size: 1.3rem;
+      }
+      
+      .map-overlay {
+        left: 10px;
+        right: 10px;
+        max-width: none;
+      }
+      
+      .coordinates-display {
+        left: 10px;
+        right: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="main-container">
+    <div class="left-panel">
+      <div class="panel-header">
+        <div class="title-section">
+          <h1>🎯 Fare Predictor</h1>
+          <div class="status-badge">
+            <span class="status-indicator"></span>
+            Active
+          </div>
+        </div>
+        <p class="subtitle">
+          Configure your ride and get instant predictions
+        </p>
+      </div>
+      
+      <div class="panel-content">
+        <div class="form-section">
+          <div class="input-group">
+            <label><span class="icon">📅</span> Pickup Date & Time</label>
+            <input id="datetime" type="datetime-local" />
+            <p class="helper-text">When do you need the ride?</p>
+          </div>
+          
+          <div class="input-group">
+            <label><span class="icon">👥</span> Passengers</label>
+            <input id="passengers" type="number" min="1" max="6" value="2" />
+            <p class="helper-text">Number of people (1-6)</p>
+          </div>
+          
+          <div class="map-instructions">
+            <strong>Map Instructions:</strong> Click once for pickup (🟢 green), click again for dropoff (🔴 red). Third click resets.
+          </div>
+          
+          <div id="result" class="result-panel pending">
+            Select locations on map and click Calculate
+          </div>
+          
+          <div class="actions">
+            <button class="btn-primary" id="predictBtn" onclick="predictFare()">
+              Calculate
+            </button>
+            <button class="btn-secondary" onclick="window.location.href='/'">
+              ← Back
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="map-container">
+      <div class="map-overlay">
+        <div class="map-overlay-title">📍 Select Locations</div>
+        <div class="map-overlay-text">
+          Click on the map to place your pickup and dropoff markers
+        </div>
+      </div>
+      
+      <div id="coordinates" class="coordinates-display">
+        <div class="coord-item">
+          <span class="coord-label">Pickup:</span>
+          <span class="coord-value" id="pickup-coords">Not set</span>
+        </div>
+        <div class="coord-item">
+          <span class="coord-label">Dropoff:</span>
+          <span class="coord-value" id="dropoff-coords">Not set</span>
+        </div>
+      </div>
+      
+      <div id="map"></div>
+    </div>
+  </div>
+
+  <input id="pickup_lon" type="hidden">
+  <input id="pickup_lat" type="hidden">
+  <input id="dropoff_lon" type="hidden">
+  <input id="dropoff_lat" type="hidden">
+
+  <script>
+    let map;
+    let pickupMarker = null;
+    let dropoffMarker = null;
+
+    function setDefaultDatetime() {
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      document.getElementById('datetime').value = now.toISOString().slice(0, 16);
+    }
+
+    function initMap() {
+      map = L.map('map').setView([40.758, -73.985], 12);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+
+      map.on('click', handleMapClick);
+      
+      setTimeout(() => map.invalidateSize(), 100);
+    }
+
+    function updateCoordinatesDisplay() {
+      const coordsDiv = document.getElementById("coordinates");
+      const pickupCoordsSpan = document.getElementById("pickup-coords");
+      const dropoffCoordsSpan = document.getElementById("dropoff-coords");
+      
+      const pickupLon = document.getElementById("pickup_lon").value;
+      const pickupLat = document.getElementById("pickup_lat").value;
+      const dropoffLon = document.getElementById("dropoff_lon").value;
+      const dropoffLat = document.getElementById("dropoff_lat").value;
+      
+      if (pickupLon && pickupLat) {
+        pickupCoordsSpan.textContent = `${parseFloat(pickupLat).toFixed(4)}, ${parseFloat(pickupLon).toFixed(4)}`;
+        coordsDiv.classList.add("active");
+      } else {
+        pickupCoordsSpan.textContent = "Not set";
+      }
+      
+      if (dropoffLon && dropoffLat) {
+        dropoffCoordsSpan.textContent = `${parseFloat(dropoffLat).toFixed(4)}, ${parseFloat(dropoffLon).toFixed(4)}`;
+      } else {
+        dropoffCoordsSpan.textContent = "Not set";
+      }
+      
+      if (!pickupLon && !dropoffLon) {
+        coordsDiv.classList.remove("active");
+      }
+    }
+
+    function handleMapClick(e) {
+      const lat = e.latlng.lat;
+      const lon = e.latlng.lng;
+
+      const pickupLonInput = document.getElementById("pickup_lon");
+      const pickupLatInput = document.getElementById("pickup_lat");
+      const dropoffLonInput = document.getElementById("dropoff_lon");
+      const dropoffLatInput = document.getElementById("dropoff_lat");
+
+      if (!pickupMarker) {
+        const greenIcon = L.icon({
+          iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png",
+          shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+          shadowSize: [41, 41]
+        });
+        
+        pickupMarker = L.marker([lat, lon], { title: "Pickup", icon: greenIcon })
+          .addTo(map)
+          .bindPopup("<strong>🟢 Pickup Location</strong>").openPopup();
+
+        pickupLatInput.value = lat.toFixed(6);
+        pickupLonInput.value = lon.toFixed(6);
+      } else if (!dropoffMarker) {
+        const redIcon = L.icon({
+          iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
+          shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+          shadowSize: [41, 41]
+        });
+
+        dropoffMarker = L.marker([lat, lon], { title: "Dropoff", icon: redIcon })
+          .addTo(map)
+          .bindPopup("<strong>🔴 Dropoff Location</strong>").openPopup();
+
+        dropoffLatInput.value = lat.toFixed(6);
+        dropoffLonInput.value = lon.toFixed(6);
+      } else {
+        map.removeLayer(pickupMarker);
+        map.removeLayer(dropoffMarker);
+        pickupMarker = null;
+        dropoffMarker = null;
+        pickupLonInput.value = "";
+        pickupLatInput.value = "";
+        dropoffLonInput.value = "";
+        dropoffLatInput.value = "";
+      }
+      
+      updateCoordinatesDisplay();
+    }
+
+    async function predictFare() {
+      const resultDiv = document.getElementById("result");
+      const predictBtn = document.getElementById("predictBtn");
+      
+      resultDiv.className = "result-panel pending";
+      resultDiv.innerHTML = "🔄 Processing...";
+      predictBtn.disabled = true;
+
+      const datetime = document.getElementById("datetime").value;
+      if (!datetime) {
+        resultDiv.className = "result-panel error";
+        resultDiv.textContent = "⚠️ Please select pickup date & time";
+        predictBtn.disabled = false;
+        return;
+      }
+
+      const pickupLon = document.getElementById("pickup_lon").value;
+      const pickupLat = document.getElementById("pickup_lat").value;
+      const dropoffLon = document.getElementById("dropoff_lon").value;
+      const dropoffLat = document.getElementById("dropoff_lat").value;
+
+      if (!pickupLon || !pickupLat || !dropoffLon || !dropoffLat) {
+        resultDiv.className = "result-panel error";
+        resultDiv.textContent = "⚠️ Please select both locations on map";
+        predictBtn.disabled = false;
+        return;
+      }
+
+      const payload = {
+        pickup_datetime: new Date(datetime).toISOString(),
+        pickup_longitude: parseFloat(pickupLon),
+        pickup_latitude: parseFloat(pickupLat),
+        dropoff_longitude: parseFloat(dropoffLon),
+        dropoff_latitude: parseFloat(dropoffLat),
+        passenger_count: parseInt(document.getElementById("passengers").value)
+      };
+
+      try {
+        const response = await fetch("http://127.0.0.1:8000/predict", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          resultDiv.className = "result-panel error";
+          resultDiv.textContent = "❌ " + (error.detail || response.statusText);
+          predictBtn.disabled = false;
+          return;
+        }
+
+        const data = await response.json();
+        const fareAmount = data.predicted_fare.toFixed(2);
+        
+        resultDiv.className = "result-panel success";
+        resultDiv.innerHTML = `
+          <span class="fare-amount">$${fareAmount}</span>
+          <span class="fare-label">Estimated Fare</span>
+          <div class="result-details">
+            <div class="detail-item">
+              <div class="detail-label">Distance</div>
+              <div class="detail-value">${data.trip_distance_km} km</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Rush Hour</div>
+              <div class="detail-value">${data.is_rush_hour ? '✅ Yes' : '❌ No'}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Weekend</div>
+              <div class="detail-value">${data.is_weekend ? '✅ Yes' : '❌ No'}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Late Night</div>
+              <div class="detail-value">${data.is_late_night ? '✅ Yes' : '❌ No'}</div>
+            </div>
+          </div>
+        `;
+        
+        predictBtn.disabled = false;
+      } catch (error) {
+        resultDiv.className = "result-panel error";
+        resultDiv.textContent = "❌ Network error: " + error.message;
+        predictBtn.disabled = false;
+      }
+    }
+
+    window.addEventListener("load", () => {
+      setDefaultDatetime();
+      initMap();
+    });
+    
+    window.addEventListener("resize", () => {
+      if (map) map.invalidateSize();
+    });
+  </script>
+</body>
+</html>

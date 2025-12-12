@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Model Optimizer – Uber ML Intelligence</title>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0a0e27;
+      color: #e8edf5;
+      height: 100vh;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    body::before {
+      content: "";
+      position: fixed;
+      top: -30%;
+      left: -10%;
+      width: 60%;
+      height: 60%;
+      background: radial-gradient(circle, rgba(249, 115, 22, 0.15) 0%, transparent 70%);
+      animation: pulse 8s ease-in-out infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    body::after {
+      content: "";
+      position: fixed;
+      bottom: -20%;
+      right: -10%;
+      width: 50%;
+      height: 50%;
+      background: radial-gradient(circle, rgba(251, 191, 36, 0.12) 0%, transparent 70%);
+      animation: pulse 10s ease-in-out infinite reverse;
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.1); }
+    }
+    
+    .main-container {
+      height: 100vh;
+      display: flex;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .left-panel {
+      width: 480px;
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.85));
+      border-right: 1px solid rgba(249, 115, 22, 0.3);
+      backdrop-filter: blur(40px);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+    
+    .panel-header {
+      padding: 24px 28px 20px;
+      border-bottom: 1px solid rgba(71, 85, 105, 0.3);
+    }
+    
+    .title-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      gap: 12px;
+    }
+    
+    .title-section h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #f97316, #fbbf24);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.5px;
+    }
+    
+    .training-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(249, 115, 22, 0.15);
+      border: 1px solid rgba(249, 115, 22, 0.4);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #fdba74;
+      white-space: nowrap;
+    }
+    
+    .subtitle {
+      color: #94a3b8;
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+    
+    .panel-content {
+      padding: 20px 28px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .param-section {
+      background: rgba(249, 115, 22, 0.05);
+      border: 1px solid rgba(249, 115, 22, 0.2);
+      border-radius: 16px;
+      padding: 16px;
+    }
+    
+    .section-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #fbbf24;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .input-group {
+      margin-bottom: 12px;
+    }
+    
+    .input-group:last-child {
+      margin-bottom: 0;
+    }
+    
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #cbd5e1;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .label-icon {
+      font-size: 1rem;
+    }
+    
+    input[type="number"], input[type="range"], select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(71, 85, 105, 0.5);
+      background: rgba(15, 23, 42, 0.8);
+      color: #e8edf5;
+      font-size: 0.9rem;
+      transition: all 0.3s;
+      font-family: inherit;
+    }
+    
+    input:focus, select:focus {
+      outline: none;
+      border-color: #f97316;
+      background: rgba(15, 23, 42, 1);
+      box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+    }
+    
+    .helper-text {
+      font-size: 0.7rem;
+      color: #64748b;
+      margin-top: 3px;
+      line-height: 1.3;
+    }
+    
+    .value-display {
+      background: rgba(249, 115, 22, 0.1);
+      border: 1px solid rgba(249, 115, 22, 0.3);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fbbf24;
+      text-align: center;
+      margin-top: 6px;
+    }
+    
+    .hyperparams-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    
+    button {
+      flex: 1;
+      padding: 12px 18px;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #f97316, #fbbf24);
+      color: #0a0e27;
+      box-shadow: 0 4px 20px rgba(249, 115, 22, 0.3);
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(249, 115, 22, 0.5);
+    }
+    
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .btn-secondary {
+      background: rgba(71, 85, 105, 0.3);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      color: #cbd5e1;
+    }
+    
+    .btn-secondary:hover {
+      background: rgba(71, 85, 105, 0.5);
+      border-color: #94a3b8;
+    }
+    
+    .right-panel {
+      flex: 1;
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.4));
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      position: relative;
+      overflow-y: auto;
+    }
+    
+    .visualization-area {
+      width: 100%;
+      max-width: 900px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding-top: 40px;
+    }
+    
+    .result-panel {
+      width: 100%;
+      max-width: 900px;
+      padding: 32px;
+      border-radius: 20px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(71, 85, 105, 0.4);
+      min-height: 200px;
+      transition: all 0.3s;
+      backdrop-filter: blur(20px);
+    }
+    
+    .result-panel.pending {
+      color: #94a3b8;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    
+    .result-panel.processing {
+      background: rgba(249, 115, 22, 0.1);
+      border-color: rgba(249, 115, 22, 0.4);
+      color: #fdba74;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    
+    .result-panel.success {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(34, 211, 238, 0.15));
+      border-color: rgba(16, 185, 129, 0.5);
+    }
+    
+    .success-header {
+      font-size: 1.4rem;
+      color: #6ee7b7;
+      margin-bottom: 24px;
+      font-weight: 700;
+      text-align: center;
+    }
+    
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      width: 100%;
+      margin-bottom: 24px;
+    }
+    
+    .metric-card {
+      background: rgba(15, 23, 42, 0.8);
+      padding: 20px;
+      border-radius: 16px;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      text-align: center;
+      transition: all 0.3s;
+    }
+    
+    .metric-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(16, 185, 129, 0.5);
+      box-shadow: 0 12px 40px rgba(16, 185, 129, 0.2);
+    }
+    
+    .metric-label {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    
+    .metric-value {
+      font-size: 2.2rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, #22d3ee, #10b981);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+    }
+    
+    .training-info {
+      background: rgba(15, 23, 42, 0.6);
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid rgba(71, 85, 105, 0.4);
+      font-size: 0.9rem;
+      color: #cbd5e1;
+      line-height: 1.8;
+    }
+    
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    
+    .info-row:last-child {
+      margin-bottom: 0;
+    }
+    
+    .info-label {
+      color: #64748b;
+    }
+    
+    .info-value {
+      color: #22d3ee;
+      font-weight: 600;
+    }
+    
+    .result-panel.error {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    
+    .spinner {
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      border: 3px solid rgba(251, 191, 36, 0.3);
+      border-top-color: #fbbf24;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 12px;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .info-card {
+      width: 100%;
+      max-width: 600px;
+      background: rgba(249, 115, 22, 0.1);
+      border: 1px solid rgba(249, 115, 22, 0.3);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    
+    .info-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fbbf24;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .info-text {
+      color: #94a3b8;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+    
+    @media (max-width: 1200px) {
+      .main-container {
+        flex-direction: column;
+      }
+      
+      .left-panel {
+        width: 100%;
+        height: auto;
+        max-height: 60vh;
+        border-right: none;
+        border-bottom: 1px solid rgba(249, 115, 22, 0.3);
+      }
+      
+      .right-panel {
+        height: 40vh;
+        padding: 20px;
+      }
+      
+      .metrics-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="main-container">
+    <div class="left-panel">
+      <div class="panel-header">
+        <div class="title-section">
+          <h1>⚙️ Model Optimizer</h1>
+          <div class="training-badge">
+            Training Console
+          </div>
+        </div>
+        <p class="subtitle">
+          Select model, adjust hyperparameters, and retrain with custom settings
+        </p>
+      </div>
+      
+      <div class="panel-content">
+        <div class="param-section">
+          <div class="section-title">
+            <span>🤖</span> Model Selection
+          </div>
+
+          <div class="input-group">
+            <label>
+              <span class="label-icon">🎯</span>
+              Model Type
+            </label>
+            <select id="modelSelect" onchange="loadHyperparameters()">
+              <option value="catboost">CatBoost (Best - 72.6%)</option>
+              <option value="lightgbm">LightGBM (71.7%)</option>
+              <option value="xgboost">XGBoost (69.2%)</option>
+              <option value="random_forest">Random Forest (69.3%)</option>
+              <option value="gradient_boosting">Gradient Boosting (69.5%)</option>
+              <option value="knn">K-Nearest Neighbors (63.4%)</option>
+              <option value="decision_tree">Decision Tree (34.2%)</option>
+              <option value="linear_regression">Linear Regression (64.9%)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="param-section">
+          <div class="section-title">
+            <span>🎛️</span> Hyperparameters
+          </div>
+          <div id="hyperparamsContainer" class="hyperparams-container">
+            <!-- Dynamic hyperparameters will load here -->
+          </div>
+        </div>
+
+        <div class="param-section">
+          <div class="section-title">
+            <span>📊</span> Training Settings
+          </div>
+          <div class="input-group">
+            <label>
+              <span class="label-icon">✂️</span>
+              Test Split
+            </label>
+            <select id="testSize">
+              <option value="0.2" selected>20% (Recommended)</option>
+              <option value="0.15">15%</option>
+              <option value="0.25">25%</option>
+              <option value="0.3">30%</option>
+            </select>
+            <p class="helper-text">Portion of data reserved for testing</p>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn-primary" id="trainBtn" onclick="startTraining()">
+            🚀 Train Model
+          </button>
+          <button class="btn-secondary" onclick="window.location.href='/'">
+            ← Back
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="right-panel">
+      <div class="visualization-area">
+        <div class="info-card">
+          <div class="info-title">
+            <span>💡</span> Training Console
+          </div>
+          <div class="info-text">
+            Select a model from the dropdown, adjust hyperparameters to your preferences, and click "Train Model" to retrain with your custom settings. Training typically takes 10-30 seconds depending on the model complexity.
+          </div>
+        </div>
+        
+        <div id="result" class="result-panel pending">
+          <div>
+            <div style="font-size: 2.5rem; margin-bottom: 12px;">⚙️</div>
+            <div>Configure settings and click "Train Model" to start</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentHyperparams = {};
+
+    async function loadHyperparameters() {
+      const modelType = document.getElementById('modelSelect').value;
+      const container = document.getElementById('hyperparamsContainer');
+      
+      try {
+        const response = await fetch(`http://127.0.0.1:8000/models/hyperparameters/${modelType}`);
+        const data = await response.json();
+        
+        const hyperparams = data.hyperparameters;
+        currentHyperparams = {};
+        
+        container.innerHTML = '';
+        
+        if (Object.keys(hyperparams).length === 0) {
+          container.innerHTML = '<p style="color: #94a3b8; font-size: 0.85rem;">This model has no configurable hyperparameters</p>';
+          return;
+        }
+        
+        for (const [key, config] of Object.entries(hyperparams)) {
+          const inputGroup = document.createElement('div');
+          inputGroup.className = 'input-group';
+          
+          const label = document.createElement('label');
+          label.innerHTML = `<span class="label-icon">🔧</span> ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`;
+          
+          if (config.type === 'int' || config.type === 'float') {
+            const input = document.createElement('input');
+            input.type = 'range';
+            input.id = `param_${key}`;
+            input.min = config.min;
+            input.max = config.max;
+            input.step = config.step;
+            input.value = config.default;
+            
+            const display = document.createElement('div');
+            display.className = 'value-display';
+            display.id = `display_${key}`;
+            display.textContent = config.default;
+            
+            input.oninput = () => {
+              const value = config.type === 'float' ? parseFloat(input.value) : parseInt(input.value);
+              display.textContent = value;
+              currentHyperparams[key] = value;
+            };
+            
+            currentHyperparams[key] = config.default;
+            
+            inputGroup.appendChild(label);
+            inputGroup.appendChild(input);
+            inputGroup.appendChild(display);
+          } else if (config.type === 'select') {
+            const select = document.createElement('select');
+            select.id = `param_${key}`;
+            
+            for (const option of config.options) {
+              const opt = document.createElement('option');
+              opt.value = option;
+              opt.textContent = option.charAt(0).toUpperCase() + option.slice(1);
+              if (option === config.default) opt.selected = true;
+              select.appendChild(opt);
+            }
+            
+            select.onchange = () => {
+              currentHyperparams[key] = select.value;
+            };
+            
+            currentHyperparams[key] = config.default;
+            
+            inputGroup.appendChild(label);
+            inputGroup.appendChild(select);
+          }
+          
+          container.appendChild(inputGroup);
+        }
+        
+      } catch (error) {
+        console.error('Error loading hyperparameters:', error);
+        container.innerHTML = '<p style="color: #fca5a5;">Error loading hyperparameters</p>';
+      }
+    }
+
+    async function startTraining() {
+      const resultDiv = document.getElementById("result");
+      const trainBtn = document.getElementById("trainBtn");
+      
+      trainBtn.disabled = true;
+      resultDiv.className = "result-panel processing";
+      resultDiv.innerHTML = '<div><span class="spinner"></span><div style="font-size: 1.1rem;">Training model with custom hyperparameters...</div><div style="margin-top: 8px; font-size: 0.85rem; color: #94a3b8;">This may take 10-30 seconds</div></div>';
+
+      const modelType = document.getElementById('modelSelect').value;
+      const testSize = parseFloat(document.getElementById('testSize').value);
+
+      const payload = {
+        model_type: modelType,
+        hyperparameters: currentHyperparams,
+        test_size: testSize
+      };
+
+      try {
+        const response = await fetch("http://127.0.0.1:8000/retrain", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          resultDiv.className = "result-panel error";
+          resultDiv.innerHTML = `<div><div style="font-size: 2rem; margin-bottom: 12px;">❌</div><div>Training failed: ${error.detail || response.statusText}</div></div>`;
+          trainBtn.disabled = false;
+          return;
+        }
+
+        const data = await response.json();
+        
+        resultDiv.className = "result-panel success";
+        resultDiv.innerHTML = `
+          <div style="width: 100%;">
+            <div class="success-header">
+              ✅ ${data.model_name} Training Complete
+            </div>
+            <div class="metrics-grid">
+              <div class="metric-card">
+                <div class="metric-label">R² Score</div>
+                <div class="metric-value">${(data.metrics.r2_score * 100).toFixed(1)}%</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">RMSE</div>
+                <div class="metric-value">$${data.metrics.rmse.toFixed(2)}</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">MAE</div>
+                <div class="metric-value">$${data.metrics.mae.toFixed(2)}</div>
+              </div>
+            </div>
+            <div class="training-info">
+              <div style="font-weight: 700; color: #22d3ee; margin-bottom: 12px;">Training Details</div>
+              <div class="info-row">
+                <span class="info-label">Training Time:</span>
+                <span class="info-value">${data.training_time}s</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Training Samples:</span>
+                <span class="info-value">${data.metrics.training_samples.toLocaleString()}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Test Samples:</span>
+                <span class="info-value">${data.metrics.test_samples.toLocaleString()}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Model Saved:</span>
+                <span class="info-value">${modelType}_model_retrained.joblib</span>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        trainBtn.disabled = false;
+      } catch (error) {
+        resultDiv.className = "result-panel error";
+        resultDiv.innerHTML = `<div><div style="font-size: 2rem; margin-bottom: 12px;">❌</div><div>Network error: ${error.message}</div></div>`;
+        trainBtn.disabled = false;
+      }
+    }
+
+    // Load default hyperparameters on page load
+    window.addEventListener('load', () => {
+      loadHyperparameters();
+    });
+  </script>
+</body>
+</html>

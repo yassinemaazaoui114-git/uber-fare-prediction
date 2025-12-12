@@ -15,3 +15,9 @@ bandit
 xgboost
 lightgbm
 catboost
+# API & Interface (Phase 3)
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+streamlit==1.29.0
+plotly==5.18.0
+requests==2.31.0

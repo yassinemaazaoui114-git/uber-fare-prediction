@@ -1,5 +1,43 @@
 # 🚕 Uber Fare Prediction System
 
+[![Python](https://img.shields.io/badge/Python-3.12+-blue.svg)](https://python.org)
+[![GitHub](https://img.shields.io/badge/GitHub-Repository-181717.svg)](https://github.com/yassinemaazaoui114-git/uber-fare-prediction)
+[![License](https://img.shields.io/badge/License-Educational-green.svg)]()
+
+> **Note:** Model files (`.joblib`) are excluded from this repository due to size constraints. 
+> Run `make train` after setup to generate models locally.
+
+---
+
+## 🚀 Quick Start
+
+Clone the repository
+git clone https://github.com/yassinemaazaoui114-git/uber-fare-prediction.git
+cd uber-fare-prediction
+
+Setup environment (creates venv and installs dependencies)
+make setup
+
+Activate virtual environment
+source venv/bin/activate # Linux/Mac
+
+OR
+venv\Scripts\activate # Windows
+
+Train models (~3 minutes)
+make train
+
+Run tests
+make test
+
+[Rest of your existing README content...]
+
+Then commit:
+
+git add README.md
+git commit -m "Add installation instructions and badges to README"
+git push
+
 A production-ready machine learning system for predicting Uber ride fares using advanced ensemble methods and automated workflows.
 
 ## 🎯 Project Overview

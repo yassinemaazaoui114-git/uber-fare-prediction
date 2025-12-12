@@ -25,9 +25,7 @@ def add_enhanced_features(df):
 
     # 4. Distance category (short/medium/long trips)
     # Handle 0 and NaN values first
-    df["distance_category"] = pd.cut(
-        df["trip_km"], bins=[-0.1, 2, 5, 10, 200], labels=[1, 2, 3, 4]  # Include 0 values
-    )
+    df["distance_category"] = pd.cut(df["trip_km"], bins=[-0.1, 2, 5, 10, 200], labels=[1, 2, 3, 4])
     # Fill any remaining NaN with 1 (short distance)
     df["distance_category"] = df["distance_category"].fillna(1).astype(int)
 
@@ -127,7 +125,7 @@ def load_and_preprocess_data(filepath="data/datauber.csv", test_size=0.2, random
         X, y, test_size=test_size, random_state=random_state
     )
 
-    print(f"Data loaded successfully!")
+    print("Data loaded successfully!")
     print(f"Training samples: {X_train.shape[0]}")
     print(f"Testing samples: {X_test.shape[0]}")
     print(f"Features: {X_train.shape[1]} (including 5 new enhanced features)")

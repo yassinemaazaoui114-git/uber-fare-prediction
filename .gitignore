@@ -1,38 +1,48 @@
-# Python
+# ============ PYTHON ============
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
+*.egg-info/
+dist/
+build/
+*.egg
 
-# Virtual Environment - NEVER upload this!
+# ============ VIRTUAL ENVIRONMENT ============
 venv/
 env/
 ENV/
 .venv
 
-# Model files - Too large for GitHub
+# ============ ML & DATA ============
+catboost_info/
 models/*.joblib
 *.pkl
 *.h5
-
-# Data files
+*.onnx
 data/*.csv
+!data/datauber.csv
 
-# IDE
+# ============ IDE ============
 .vscode/
 .idea/
 *.swp
 *.swo
-
-# OS
+*~
 .DS_Store
-Thumbs.db
 
-# Testing
+# ============ LOGS & CACHE ============
+logs/*.log
+*.log
 .pytest_cache/
 .coverage
 htmlcov/
 
-# Jupyter
-.ipynb_checkpoints
+# ============ SERVER ============
+.api_server.pid
+nohup.out
+
+# ============ SYSTEM ============
+Thumbs.db
+.DS_Store

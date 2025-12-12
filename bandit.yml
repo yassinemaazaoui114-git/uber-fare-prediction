@@ -1,0 +1,5 @@
+# Bandit security configuration
+skips: []
+exclude_dirs:
+  - venv
+  - tests

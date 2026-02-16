@@ -73,31 +73,36 @@ This project implements **9 different machine learning models** to predict Uber 
 ## 🏗️ Project Structure
 
 uber_fare_prediction/
-├── Makefile # Automated commands
-├── main.py # Training pipeline with CLI
-├── requirements.txt # Python dependencies
-├── .flake8 # Code linting config
-├── pyproject.toml # Code formatting config
-├── bandit.yml # Security check config
-├── README.md # This file
+│
+├── Makefile                  # Automated commands
+├── main.py                   # Training pipeline with CLI
+├── requirements.txt          # Python dependencies
+├── pyproject.toml            # Code formatting configuration
+├── .flake8                   # Linting configuration
+├── bandit.yml                # Security configuration
+├── README.md                 # Project documentation
+│
 ├── data/
-│ └── datauber.csv # Dataset (44,377 rides)
-├── models/ # Trained models (9 files)
-│ ├── catboost_model.joblib
-│ ├── lightgbm_model.joblib
-│ ├── stacking_model.joblib
-│ └── ...
-├── pipelines/ # Model implementations
-│ ├── catboost_pipeline.py
-│ ├── lightgbm_pipeline.py
-│ ├── xgboost_pipeline.py
-│ ├── stacking_pipeline.py
-│ └── ...
-├── utils/
-│ └── data_loader.py # Data preprocessing
-└── tests/
-└── test_models.py # Automated tests (6 tests)
-
+│   └── datauber.csv          # Dataset (44,377 rides)
+│
+├── models/                   # Trained models
+│   ├── catboost_model.joblib
+│   ├── lightgbm_model.joblib
+│   ├── stacking_model.joblib
+│   └── ...
+│
+├── pipelines/                # Model implementations
+│   ├── catboost_pipeline.py
+│   ├── lightgbm_pipeline.py
+│   ├── xgboost_pipeline.py
+│   ├── stacking_pipeline.py
+│   └── ...
+│
+├── utils/                    # Utility functions
+│   └── data_loader.py        # Data preprocessing
+│
+└── tests/                    # Automated tests
+    └── test_models.py        # Unit tests (6 tests)
 ---
 
 ## 🚀 Quick Start
